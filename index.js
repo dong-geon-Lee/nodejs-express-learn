@@ -24,7 +24,7 @@ const getNotes = () => {
   return new Promise((resolve, reject) => {
     pool.query(
       `select bin_to_uuid(uuid,true) as uuid,title,contents,created from notes;`,
-      (err, rows, _) => {
+      (err, rows, fields) => {
         if (err) reject(err);
         else resolve(rows);
       }
@@ -92,8 +92,8 @@ app.get("/", async (req, res) => {
 
 //* 데이터 조회
 app.get("/:id", async (req, res) => {
-  const id = req.params.id;
-  const [datas] = await getNote(id);
+  const { id: uuid } = req.params;
+  const datas = await getNote(uuid);
   res.json(datas);
 });
 
