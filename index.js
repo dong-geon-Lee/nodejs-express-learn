@@ -1,10 +1,10 @@
 const express = require("express");
+const cors = require("cors");
 const mysql = require("mysql2");
 const dontenv = require("dotenv");
 
 const app = express();
-const port = 3000;
-
+const port = 5000;
 dontenv.config();
 
 const pool = mysql.createPool({
@@ -15,88 +15,110 @@ const pool = mysql.createPool({
   database: process.env.DB_DATABASE,
 });
 
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 //* GET
 const getNotes = () => {
-  pool.query(
-    `select bin_to_uuid(uuid,true) as uuid,title,contents,created from notes;`,
-    (err, rows, fields) => console.log(rows)
-  );
+  return new Promise((resolve, reject) => {
+    pool.query(
+      `select bin_to_uuid(uuid,true) as uuid,title,contents,created from notes;`,
+      (err, rows, _) => {
+        if (err) reject(err);
+        else resolve(rows);
+      }
+    );
+  });
 };
 
-getNotes();
-
+//* GET
 const getNote = (uuid) => {
-  pool.query(
-    `select bin_to_uuid(uuid,true) as uuid,title,contents,created from notes where uuid=uuid_to_bin('${uuid}',1);`,
-    (err, rows, fields) => console.log(rows)
-  );
+  return new Promise((resolve, reject) => {
+    pool.query(
+      `select bin_to_uuid(uuid,true) as uuid,title,contents,created from notes where uuid=uuid_to_bin('${uuid}',1);`,
+      (err, rows, fields) => {
+        if (err) reject(err);
+        else resolve(rows);
+      }
+    );
+  });
 };
-
-// getNote("8caad803-6501-11ee-a8b7-06b353e9a8e6");
 
 //* POST
 const addNotes = (title, contents) => {
-  pool.query(
-    `insert into notes (title,contents) values ('${title}','${contents}');`,
-    (err, rows, fields) => console.log(rows)
-  );
+  return new Promise((resolve, reject) => {
+    pool.query(
+      `insert into notes (title,contents) values ('${title}','${contents}');`,
+      (err, rows, fields) => {
+        if (err) reject(err);
+        else resolve(rows);
+      }
+    );
+  });
 };
 
 //* PUT
 const updateNote = (uuid, title, contents) => {
-  pool.query(
-    `update notes set title='${title}',contents='${contents}' where uuid=uuid_to_bin('${uuid}',1);`,
-    (err, rows, fields) => console.log(rows)
-  );
+  return new Promise((resolve, reject) => {
+    pool.query(
+      `update notes set title='${title}',contents='${contents}' where uuid=uuid_to_bin('${uuid}',1);`,
+      (err, rows, fields) => {
+        if (err) reject(err);
+        else resolve(rows);
+      }
+    );
+  });
 };
 
 //* DELETE
 const deleteNote = (uuid) => {
-  pool.query(
-    `delete from notes where uuid=uuid_to_bin('${uuid}',1); `,
-    (err, rows, fields) => console.log(rows)
-  );
+  return new Promise((resolve, reject) => {
+    pool.query(
+      `delete from notes where uuid=uuid_to_bin('${uuid}',1); `,
+      (err, rows, fields) => {
+        if (err) reject(err);
+        else resolve(rows);
+      }
+    );
+  });
 };
 
-app.get("/", (req, res) => {
-  res.send("Hello World!");
+//* 데이터 조회
+app.get("/", async (req, res) => {
+  const datas = await getNotes();
+  res.json(datas);
 });
 
-app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
+//* 데이터 조회
+app.get("/:id", async (req, res) => {
+  const id = req.params.id;
+  const [datas] = await getNote(id);
+  res.json(datas);
 });
 
 //* 데이터 추가
-// addNotes("My third Note", "A note about Content3");
-
-//* 데이터 조회
-// getNote("8caad803-6501-11ee-a8b7-06b353e9a8e6");
+app.post("/", async (req, res) => {
+  const { title, contents } = req.body;
+  const response = await addNotes(title, contents);
+  res.json(response);
+});
 
 //* 데이터 수정
-// updateNote(
-//   "9142dfb5-6506-11ee-a8b7-06b353e9a8e6",
-//   "he is hard thinker!",
-//   "How to salery increase for two years"
-// );
+app.put("/:id", async (req, res) => {
+  const { id: uuid } = req.params;
+  const { title, contents } = req.body;
+  const response = await updateNote(uuid, title, contents);
+  res.json(response);
+});
 
 //* 데이터 삭제
-// deleteNote("9142dfb5-6506-11ee-a8b7-06b353e9a8e6");
+app.delete("/:id", async (req, res) => {
+  const { id: uuid } = req.params;
+  const response = await deleteNote(uuid);
+  res.json(response);
+});
 
-//* crud 쿼리문
-// pool.query(
-//   `INSERT INTO notes (title, contents) VALUES
-// ('My First Note', 'A note about something'),
-// ('My Second Note', 'A note about something else');`,
-//   (err, rows, fields) => console.log(rows)
-// );
-// pool.query(`show databases;`, (err, rows, fields) => console.log(rows));
-// pool.query("show tables;", (err, rows, fields) => console.log(rows));
-// pool.query(
-//   `CREATE TABLE notes (
-//   uuid BINARY(16) DEFAULT (UUID_TO_BIN(UUID(),1)) PRIMARY KEY,
-//   title VARCHAR(255) NOT NULL,
-//   contents TEXT NOT NULL,
-//   created TIMESTAMP NOT NULL DEFAULT NOW()
-// );`,
-//   (err, rows, fields) => console.log(rows)
-// );
+app.listen(port, () => {
+  console.log(`Running on http://localhost:${port}`);
+});
