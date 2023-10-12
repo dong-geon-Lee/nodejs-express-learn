@@ -7,15 +7,14 @@ const app = express();
 const port = 5000;
 dontenv.config();
 
-const pool = mysql
-  .createPool({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    port: process.env.DB_PORT,
-    database: process.env.DB_DATABASE,
-  })
-  .promise();
+const pool = mysql.createPool({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  port: process.env.DB_PORT,
+  database: process.env.DB_DATABASE,
+});
+// .promise();
 
 app.use(cors());
 app.use(express.json());
@@ -23,82 +22,79 @@ app.use(express.urlencoded({ extended: true }));
 
 //* GET
 const getNotes = async () => {
-  const query = `select bin_to_uuid(uuid,true) as uuid,title,contents,created from notes;`;
-  const [rows] = await pool.query(query);
-  return rows;
-  // return new Promise((resolve, reject) => {
-  //   pool.query(
-  //     `select bin_to_uuid(uuid,true) as uuid,title,contents,created from notes;`,
-  //     (err, rows, fields) => {
-  //       if (err) reject(err);
-  //       else resolve(rows);
-  //     }
-  //   );
-  // });
+  // const query = `select bin_to_uuid(uuid,true) as uuid,title,contents,created from notes;`;
+  // const [rows] = await pool.query(query);
+  // return rows;
+  return new Promise((resolve, reject) => {
+    pool.query(
+      `select id,title,contents,created from notes;`,
+      (err, rows, fields) => {
+        if (err) reject(err);
+        else resolve(rows);
+      }
+    );
+  });
 };
 
 //* GET
 const getNote = async (uuid) => {
-  const query = `select bin_to_uuid(uuid,true) as uuid,title,contents,created from notes where uuid=uuid_to_bin('${uuid}',1);`;
-  const [rows] = await pool.query(query);
-  return rows;
-  // return new Promise((resolve, reject) => {
-  //   pool.query(
-  //     `select bin_to_uuid(uuid,true) as uuid,title,contents,created from notes where uuid=uuid_to_bin('${uuid}',1);`,
-  //     (err, rows, fields) => {
-  //       if (err) reject(err);
-  //       else resolve(rows);
-  //     }
-  //   );
-  // });
+  // const query = `select bin_to_uuid(uuid,true) as uuid,title,contents,created from notes where uuid=uuid_to_bin('${uuid}',1);`;
+  // const [rows] = await pool.query(query);
+  // return rows;
+  return new Promise((resolve, reject) => {
+    pool.query(
+      `select id,title,contents,created from notes where id=${uuid}`,
+      (err, rows, fields) => {
+        if (err) reject(err);
+        else resolve(rows);
+      }
+    );
+  });
 };
 
 //* POST
 const addNotes = async (title, contents) => {
-  const query = `insert into notes (title,contents) values ('${title}','${contents}');`;
-  const [rows] = await pool.query(query);
-  return rows;
-  // return new Promise((resolve, reject) => {
-  //   pool.query(
-  //     `insert into notes (title,contents) values ('${title}','${contents}');`,
-  //     (err, rows, fields) => {
-  //       if (err) reject(err);
-  //       else resolve(rows);
-  //     }
-  //   );
-  // });
+  // const query = `insert into notes (title,contents) values ('${title}','${contents}');`;
+  // const [rows] = await pool.query(query);
+  // return rows;
+  return new Promise((resolve, reject) => {
+    pool.query(
+      `insert into notes (title,contents) values ('${title}','${contents}');`,
+      (err, rows, fields) => {
+        if (err) reject(err);
+        else resolve(rows);
+      }
+    );
+  });
 };
 
 //* PUT
 const updateNote = async (uuid, title, contents) => {
-  const query = `update notes set title='${title}',contents='${contents}' where uuid=uuid_to_bin('${uuid}',1);`;
-  const [rows] = await pool.query(query);
-  return rows;
-  // return new Promise((resolve, reject) => {
-  //   pool.query(
-  //     `update notes set title='${title}',contents='${contents}' where uuid=uuid_to_bin('${uuid}',1);`,
-  //     (err, rows, fields) => {
-  //       if (err) reject(err);
-  //       else resolve(rows);
-  //     }
-  //   );
-  // });
+  // const query = `update notes set title='${title}',contents='${contents}' where uuid=uuid_to_bin('${uuid}',1);`;
+  // const [rows] = await pool.query(query);
+  // return rows;
+  return new Promise((resolve, reject) => {
+    pool.query(
+      `update notes set title='${title}',contents='${contents}' where id=${uuid}`,
+      (err, rows, fields) => {
+        if (err) reject(err);
+        else resolve(rows);
+      }
+    );
+  });
 };
 
 //* DELETE
 const deleteNote = async (uuid) => {
-  const query = `delete from notes where uuid=uuid_to_bin('${uuid}',1);`;
-  const [rows] = await pool.query(query);
-  return rows;
-  // return new Promise((resolve, reject) => {
-  //   pool.query(
-  //     `delete from notes where uuid=uuid_to_bin('${uuid}',1); `,
-  //     (err, rows, fields) => {
-  //       if (err) reject(err);
-  //       else resolve(rows);
-  //     }
-  //   );
-  // });
+  // const query = `delete from notes where uuid=uuid_to_bin('${uuid}',1);`;
+  // const [rows] = await pool.query(query);
+  // return rows;
+  return new Promise((resolve, reject) => {
+    pool.query(`delete from notes where id=${uuid}`, (err, rows, fields) => {
+      if (err) reject(err);
+      else resolve(rows);
+    });
+  });
 };
 
 //* 데이터 조회
